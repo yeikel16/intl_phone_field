@@ -298,7 +298,6 @@ class IntlPhoneField extends StatefulWidget {
 class _IntlPhoneFieldState extends State<IntlPhoneField> {
   late List<Country> _countryList;
   late Country _selectedCountry;
-  late List<Country> filteredCountries;
   late String number;
 
   String? validatorMessage;
@@ -306,9 +305,19 @@ class _IntlPhoneFieldState extends State<IntlPhoneField> {
   @override
   void initState() {
     super.initState();
-    _countryList = widget.countries ?? countries;
-    filteredCountries = _countryList;
+    if (widget.countries == null) {
+      countries.sort(
+        (a, b) => a
+            .localizedName(widget.languageCode)
+            .compareTo(b.localizedName(widget.languageCode)),
+      );
+      _countryList = countries;
+    } else {
+      _countryList = widget.countries ?? countries;
+    }
+
     number = widget.initialValue ?? '';
+
     if (widget.initialCountryCode == null && number.startsWith('+')) {
       number = number.substring(1);
       // parse initial value
@@ -354,7 +363,6 @@ class _IntlPhoneFieldState extends State<IntlPhoneField> {
   }
 
   Future<void> _changeCountry() async {
-    filteredCountries = _countryList;
     await showDialog(
       context: context,
       useRootNavigator: false,
@@ -362,7 +370,6 @@ class _IntlPhoneFieldState extends State<IntlPhoneField> {
         builder: (ctx, setState) => CountryPickerDialog(
           languageCode: widget.languageCode.toLowerCase(),
           style: widget.pickerDialogStyle,
-          filteredCountries: filteredCountries,
           searchText: widget.searchText,
           countryList: _countryList,
           selectedCountry: _selectedCountry,
@@ -381,7 +388,9 @@ class _IntlPhoneFieldState extends State<IntlPhoneField> {
   Widget build(BuildContext context) {
     return TextFormField(
       initialValue: (widget.controller == null) ? number : null,
-      autofillHints: widget.disableAutoFillHints ? null : [AutofillHints.telephoneNumberNational],
+      autofillHints: widget.disableAutoFillHints
+          ? null
+          : [AutofillHints.telephoneNumberNational],
       readOnly: widget.readOnly,
       obscureText: widget.obscureText,
       textAlign: widget.textAlign,
@@ -458,7 +467,9 @@ class _IntlPhoneFieldState extends State<IntlPhoneField> {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                SizedBox(width: 4,),
+                SizedBox(
+                  width: 4,
+                ),
                 if (widget.enabled &&
                     widget.showDropdownIcon &&
                     widget.dropdownIconPosition == IconPosition.leading) ...[
@@ -466,17 +477,16 @@ class _IntlPhoneFieldState extends State<IntlPhoneField> {
                   SizedBox(width: 4),
                 ],
                 if (widget.showCountryFlag) ...[
-                  kIsWeb ?
-                  Image.asset(
-                              'assets/flags/${_selectedCountry.code.toLowerCase()}.png',
-                              package: 'intl_phone_field',
-                              width: 32,
-                            )
-                            :
-                  Text(
-                    _selectedCountry.flag,
-                    style: TextStyle(fontSize: 18),
-                  ),
+                  kIsWeb
+                      ? Image.asset(
+                          'assets/flags/${_selectedCountry.code.toLowerCase()}.png',
+                          package: 'intl_phone_field',
+                          width: 32,
+                        )
+                      : Text(
+                          _selectedCountry.flag,
+                          style: TextStyle(fontSize: 18),
+                        ),
                   SizedBox(width: 8),
                 ],
                 FittedBox(
